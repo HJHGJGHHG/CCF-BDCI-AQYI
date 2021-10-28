@@ -51,6 +51,7 @@ def train(args, model, train_iter, val_iter):
         losses = []
         for sample in tqdm(train_iter):
             model.train()
+            optimizer.zero_grad()
             input_ids = sample['input_ids'].to(args.device)
             attention_mask = sample['attention_mask'].to(args.device)
             labels = sample['emotions']
@@ -59,9 +60,8 @@ def train(args, model, train_iter, val_iter):
             loss = outputs[0]
             losses.append(loss.item())
             loss.backward()
-            optimizer.zero_grad()
             
-            # nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+            nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
             optimizer.step()
             scheduler.step()
         # 一个Epoch训练完毕，输出train_loss
@@ -102,6 +102,6 @@ def predict(args, model, test_iter):
     submission = pd.read_csv(args.path + "submit_example.tsv", sep='\t')
     sub = submission.copy()
     sub["emotion"] = test_pred
-    sub["emotion"] = sub["emotion"].apply(lambda x: ','.join([str(f(i)) for i in x]))
+    sub["emotion"] = sub["emotion"].apply(lambda x: ','.join([str(i) for i in x]))
     
     sub.to_csv(args.path + "submission.tsv", sep='\t', index=False)
